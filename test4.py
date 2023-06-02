@@ -1,7 +1,2 @@
-dico = {'a' : [10, 9, 8],
-        'b' : 'bjr',
-        'c' : 777,
-        'd' : {'A' : 0.0001,
-               'B' : 2e-2}} 
+import pandas as pd
 
-print(dico['d'][0])
