@@ -1,2 +1,4 @@
 .vtk
+.h5
 output/
+venv/
