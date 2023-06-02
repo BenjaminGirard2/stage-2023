@@ -46,9 +46,9 @@ def residual(pars, x, data):
 out = minimize(residual, p, args=(xdata, ydata))
 print(out.last_internal_values)
 
-plt.plot(xdata, ydata*1000000)
-plt.plot(xdata, (ydata+out.residual)*1000000)
+plt.plot(xdata, ydata)
+plt.plot(xdata, (ydata+out.residual))
 plt.xlabel('Distance en x [mm]')
-plt.ylabel('Hauteur [nm]')
+plt.ylabel('Hauteur [mm]')
 plt.show()
 

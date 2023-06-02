@@ -25,22 +25,24 @@ xdata = data2[:,0]
 xdata = xdata[8500:45500]
 
 ydata = data2[:,1]
-ydata = ydata[8500:45500]/1000
+ydata = ydata[8500:45500]
 
-def func(x, a, b, c):
-    return -np.sqrt(a-(x-b)**2) + c
+def func(x, a, b, c, d):
+    return a*x**3 + b*x**2 + c*x + d
 
 
 p = Parameters()
-p.add('a', value=30000)
-p.add('b', value=27.5)
-p.add('c', value=163)
+p.add('a', value=0.2)
+p.add('b', value=-10)
+p.add('c', value=100)
+p.add('d', value=100)
 
 def residual(pars, x, data):
     a = pars['a']
     b = pars['b']
     c = pars['c']
-    model = func(x, a, b, c)
+    d = pars['d']
+    model = func(x, a, b, c, d)
     return model - data
 
 out = minimize(residual, p, args=(xdata, ydata))
@@ -48,7 +50,4 @@ print(out.last_internal_values)
 
 plt.plot(xdata, ydata)
 plt.plot(xdata, ydata+out.residual)
-plt.xlabel('Distance en x [mm]')
-plt.ylabel('Hauteur [mm]')
 plt.show()
-

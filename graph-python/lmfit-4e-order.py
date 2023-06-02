@@ -48,7 +48,7 @@ def residual(pars, x, data):
     return model - data
 
 out = minimize(residual, p, args=(xdata, ydata))
-print(out.__dict__)
+print(out.last_internal_values)
 
 plt.plot(xdata, ydata)
 plt.plot(xdata, ydata+out.residual)
