@@ -1,6 +1,8 @@
+from lmfit import Parameters, minimize
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+
 
 with open(r'mesures\plaque Al depart.txt') as file:
     data0 = np.loadtxt(file, delimiter=',')
@@ -17,10 +19,6 @@ with open(r'mesures\plaque Al machine.txt') as file:
 #    plt.plot(data2[:,0], data2[:,1]-250, 'red', label='Après polissage, sans contraintes')
     file.close()
 
-#plt.xlabel('Distance en x [\u03BCm]')
-#plt.ylabel('Hauteur [\u03BCm]')
-#plt.legend()
-#plt.show()
 
 
 xdata = data2[:,0]
@@ -29,19 +27,27 @@ xdata = xdata[8500:45500]
 ydata = data2[:,1]
 ydata = ydata[8500:45500]
 
-def func(x, a, b, c):
-    return a*x**2 + b*x + c
+def func(x, a, b, c, d):
+    return np.sqrt(b**2*(1+(x-c)**2)/a**2)+d
 
+
+p = Parameters()
+p.add('a', value=1)
+p.add('b', value=-1)
+p.add('c', value=1)
+p.add('d', value= 1)
+
+def residual(pars, x, data):
+    a = pars['a']
+    b = pars['b']
+    c = pars['c']
+    d = pars['d']
+    model = func(x, a, b, c, d)
+    return model - data
+
+out = minimize(residual, p, args=(xdata, ydata))
+print(out.__dict__)
 
 plt.plot(xdata, ydata)
-p0 = np.array([0.2, -10, -100])
-model = func(xdata, *p0)
-plt.plot(xdata, model)
-plt.show()
-
-popt, pcov = curve_fit(f=func, xdata=xdata, ydata=ydata, p0=p0)
-
-plt.plot(xdata, ydata)
-model = func(xdata, *popt)
-plt.plot(xdata, model)
+plt.plot(xdata, ydata+out.residual)
 plt.show()
