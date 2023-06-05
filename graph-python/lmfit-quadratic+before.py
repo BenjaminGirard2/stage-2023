@@ -21,10 +21,10 @@ with open(r'mesures\plaque Al machine.txt') as file:
 
 
 
-xdata = data2[:,0]
+xdata = data0[:,0]
 xdata = xdata[8500:45500]
 
-ydata = data2[:,1]
+ydata = data0[:,1]
 ydata = ydata[8500:45500]
 
 def func(x, a, b, c):
@@ -44,11 +44,30 @@ def residual(pars, x, data):
     return model - data
 
 out = minimize(residual, p, args=(xdata, ydata))
-print(out.last_internal_values)
+
+plt.plot(xdata, ydata)
+plt.plot(xdata, ydata+out.residual)
+
+
+xdata = data2[:,0]
+xdata = xdata[8500:45500]
+
+ydata = data2[:,1]
+ydata = ydata[8500:45500]
+
+
+
+p = Parameters()
+p.add('a', value=0.2)
+p.add('b', value=-10)
+p.add('c', value=100)
+
+
+out = minimize(residual, p, args=(xdata, ydata))
+
 
 plt.plot(xdata, ydata)
 plt.plot(xdata, ydata+out.residual)
 plt.xlabel('Distance en x [mm]')
 plt.ylabel('Hauteur [\u03BCm]')
 plt.show()
-
