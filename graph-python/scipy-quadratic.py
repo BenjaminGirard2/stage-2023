@@ -17,10 +17,6 @@ with open(r'mesures\plaque Al machine.txt') as file:
     plt.plot(data2[:,0], data2[:,1]-250, 'red', label='Après polissage, sans contraintes')
     file.close()
 
-plt.xlabel('Distance en x [mm]')
-plt.ylabel('Hauteur [\u03BCm]')
-plt.legend()
-plt.show()
 
 
 xdata = data2[:,0]
