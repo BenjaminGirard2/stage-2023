@@ -1,90 +1,86 @@
-from sfepy.base.base import import_file, get_default, OneTypeList
-from sfepy.base.conf import ProblemConf
-from sfepy.discrete.problem import Problem
-from sfepy.discrete.functions import Functions
-from sfepy.discrete.fem.mesh import Mesh
-from sfepy.discrete.fem.domain import FEDomain
-from sfepy.discrete.common.region import (Region, get_dependency_graph,
-                                          sort_by_dependency, get_parents)
-from sfepy.discrete.parse_regions import create_bnf, visit_stack, ParseException
+r"""
+Linear elasticity solved in a single patch NURBS domain using the isogeometric
+analysis (IGA) approach.
 
+Find :math:`\ul{u}` such that:
 
-filename = r"C:\Users\Benjamin\Desktop\stage 2023\disque_3d.py"
-funmod_ = import_file(filename, package_name=False)
+.. math::
+    \int_{\Omega} D_{ijkl}\ e_{ij}(\ul{v}) e_{kl}(\ul{u})
+    = 0
+    \;, \quad \forall \ul{v} \;,
 
-define_dict = funmod_.__dict__
+where
 
-conf_ = ProblemConf(define_dict, funmod_)
+.. math::
+    D_{ijkl} = \mu (\delta_{ik} \delta_{jl}+\delta_{il} \delta_{jk}) +
+    \lambda \ \delta_{ij} \delta_{kl}
+    \;.
 
-functions_ = Functions.from_conf(conf_.functions)
+The domain geometry was created by::
 
+  sfepy-mesh iga-patch -d [1,0.5,0.1] -s [11,5,3] --degrees [2,2,2] -o meshes/iga/block3d.iga
 
+View the results using::
 
-mesh = Mesh.from_file(conf_.filename_mesh)
-domain_ = FEDomain(mesh.name, mesh)
+  sfepy-view block3d.vtk -f u:wu 1:vw
+"""
+from __future__ import absolute_import
+from sfepy.mechanics.matcoefs import stiffness_from_lame
+from sfepy import data_dir
 
-obj_ = Problem('problem_from_conf', conf=conf_, functions=functions_, domain=domain_, auto_conf=False, active_only=True)
+filename_domain = data_dir + '/meshes/iga/block3d.iga'
 
+regions = {
+    'Omega' : 'all',
+    'Gamma1' : ('vertices of set xi00', 'facet'),
+    'Gamma2' : ('vertices of set xi01', 'facet'),
+}
 
+materials = {
+    'solid' : ({
+        'D' : stiffness_from_lame(3, lam=5.769, mu=3.846),
+    },),
+}
 
-# conf.regions = {'region_Omega__0': Struct:Omega, 'region_circonference__1': Struct:circonference, 
-#                    'region_center_0__2': Struct:center_0, 'region_supported__3': Struct:supported}
+fields = {
+    'displacement': ('real', 'vector', 'Omega', None, 'H1', 'iga'),
+}
 
-# obj.functions = 
-#    Functions
-#     _objs:
-#       list: [
-#         Function:select_circ_out
-#           extra_args:
-#             dict with keys: []
-#           function:
-#             <function <lambda> at 0x0000027A4FA47B80>
-#           is_constant:
-#             False
-#           name:
-#             select_circ_out
-#         Function:select_circ_in
-#           extra_args:
-#             dict with keys: []
-#           function:
-#             <function <lambda> at 0x0000027A600E5C10>
-#           is_constant:
-#             False
-#           name:
-#             select_circ_in
-#         Function:select_supports
-#           extra_args:
-#             dict with keys: []
-#           function:
-#             <function <lambda> at 0x0000027A600E5CA0>
-#           is_constant:
-#             False
-#           name:
-#             select_supports
-#       ]
-#     names:
-#       list: ['select_circ_out', 'select_circ_in', 'select_supports']
+integrals = {
+    'i' : 3,
+}
 
+variables = {
+    'u' : ('unknown field', 'displacement', 0),
+    'v' : ('test field', 'displacement', 'u'),
+}
 
+ebcs = {
+    'u1' : ('Gamma1', {'u.all' : 0.0}),
+    'u2' : ('Gamma2', {'u.0' : 0.1, 'u.[1,2]' : 'get_ebcs'}),
+}
 
+def get_ebcs(ts, coors, **kwargs):
+    import numpy as nm
 
+    aux = nm.empty_like(coors[:, 1:])
+    aux[:, 0] = 0.1 * coors[:, 1]
+    aux[:, 1] = -0.05 + 0.03 * nm.sin(coors[:, 1] * 5 * nm.pi)
 
+    return aux
 
-# obj.set_regions(conf.regions, obj.functions, allow_empty=allow_empty)
+functions = {
+    'get_ebcs' : (get_ebcs,),
+}
 
+equations = {
+    'balance_of_forces' : """dw_lin_elastic.i.Omega(solid.D, v, u) = 0""",
+}
 
-def set_regions(self, conf_regions=None, conf_materials=None, functions=None, allow_empty=False):  #class Problem
-  
-  
-    conf_regions = get_default(conf_regions, self.conf.regions)
-    functions = get_default(functions, self.functions)
-
-    self.domain.create_regions(conf_regions, functions, allow_empty=allow_empty)
-    
-
-        
-conf_regions = get_default(conf_.regions, obj_.conf.regions)
-functions = get_default(obj_.functions, obj_.functions)
-
-
-
+solvers = {
+    'ls' : ('ls.scipy_direct', {}),
+    'newton' : ('nls.newton', {
+        'i_max'      : 1,
+        'eps_a'      : 1e-10,
+    }),
+}
