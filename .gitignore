@@ -3,3 +3,5 @@
 output/
 venv/
 results/
+venv
+venv/Lib/site-packages/sfepy/postprocess/probes_vtk.py
