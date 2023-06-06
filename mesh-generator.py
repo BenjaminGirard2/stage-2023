@@ -7,7 +7,7 @@ gmsh.initialize()
 
 gmsh.model.add("try_1")
 
-m_size = 2.5e-02
+m_size = 10e-02
 
 mesh = gmsh.model.geo
 
