@@ -1,26 +1,57 @@
-from __future__ import absolute_import
-from test import *
+import meshio
+import matplotlib.pyplot as plt
 
-from sfepy.mechanics.matcoefs import stiffness_from_youngpoisson
+mesh = meshio.read(r'results\true_size.vtk')
+u = mesh.point_data['u']
+x = mesh.points[:,0]
+y = mesh.points[:,1]
+z = mesh.points[:,2]
 
-def stress_strain(out, pb, state, extend=False):
-    """
-    Calculate and output strain and stress for given displacements.
-    """
-    from sfepy.base.base import Struct
+plt.scatter(x, u[:,2])
 
-    ev = pb.evaluate
-    strain = ev('ev_cauchy_strain.2.Omega(u)', mode='el_avg')
-    stress = ev('ev_cauchy_stress.2.Omega(Aluminum.D, u)', mode='el_avg',
-                copy_materials=False)
 
-    out['cauchy_strain'] = Struct(name='output_data', mode='cell',
-                                  data=strain, dofs=None)
-    out['cauchy_stress'] = Struct(name='output_data', mode='cell',
-                                  data=stress, dofs=None)
 
-    return out
+from lmfit import Parameters, minimize
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
-aluminum = materials['Aluminum'][0]
-aluminum.update({'D' : stiffness_from_youngpoisson(2, young, poisson)})
-options.update({'post_process_hook' : 'stress_strain',})
+
+
+with open(r'mesures\plaque Al machine.txt') as file:
+    data = np.loadtxt(file, delimiter=',')
+#    plt.plot(data2[:,0], data2[:,1]-250, 'red', label='Après polissage, sans contraintes')
+    file.close()
+
+
+
+xdata = data[:,0]
+xdata = xdata[23500:29700]
+
+ydata = data[:,1]
+ydata = ydata[23500:29700]/1000
+
+def func(x, a, b, c):
+    return a*x**2 + b*x + c
+
+
+p = Parameters()
+p.add('a', value=0.2)
+p.add('b', value=-10)
+p.add('c', value=100)
+
+def residual(pars, x, data):
+    a = pars['a']
+    b = pars['b']
+    c = pars['c']
+    model = func(x, a, b, c)
+    return model - data
+
+#out = minimize(residual, p, args=(xdata, ydata))
+#print(out.last_internal_values)
+
+plt.plot((xdata-26.6)/1.5, (-ydata*4.5-0.350), 'red')
+#plt.plot(xdata, ydata+out.residual)
+plt.xlabel('Distance en x [cm]')
+plt.ylabel('Hauteur [\u03BCm]')
+plt.show()

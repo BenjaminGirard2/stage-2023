@@ -16,7 +16,7 @@ xdata = data[:,0]
 xdata = xdata[23500:29700]
 
 ydata = data[:,1]
-ydata = ydata[23500:29700]
+ydata = ydata[23500:29700]/1000
 
 def func(x, a, b, c):
     return a*x**2 + b*x + c
