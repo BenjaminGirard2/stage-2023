@@ -5,7 +5,7 @@ import numpy as np
 from math import sin, cos, pi
 
 
-filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\test_mesh2.mesh'
+filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\true_size.mesh'
 
 refinement_level = 0
 filename_mesh = refine_mesh(filename_mesh, refinement_level)
@@ -32,7 +32,7 @@ mu = (young)/((1+poisson)*2)
 
 materials = {
     'Aluminum' : ({'D': stiffness_from_lame(3, lamb, mu)},),
-    'Load' : ({'.val' : [0.0, 0.0, 100.0]},),
+    'Load' : ({'.val' : [0.0, 0.0, 1.0]},),
 }
 
 variables = {
@@ -40,11 +40,11 @@ variables = {
     'v' : ('test field', 'displacement', 'u'),
 }
 
-exterior_radius = 0.1
-interior_radius = 0.02
+exterior_radius = 4.9
+interior_radius = 0.5
 
-sceew_radius = 0.05  
-distance_from_center = 0.8
+sceew_radius = 0.2
+distance_from_center = 4.2
 number_of_supports= 6
 
 
