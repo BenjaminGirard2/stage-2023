@@ -5,7 +5,7 @@ import numpy as np
 from math import sin, cos, pi
 
 
-filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\true_size.mesh'
+filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\extrem_true_size.mesh'
 
 refinement_level = 0
 filename_mesh = refine_mesh(filename_mesh, refinement_level)
@@ -41,7 +41,7 @@ variables = {
 }
 
 exterior_radius = 4.9
-interior_radius = 0.5
+interior_radius = 0.3
 
 sceew_radius = 0.2
 distance_from_center = 4.2
