@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lmfit import Parameters, minimize
 
-mesh = meshio.read(r'results\true_size.vtk')
+mesh = meshio.read(r'vtk-files\layers-0.vtk')
 u = mesh.point_data['u']
 ux = u[:,0]
 uy = u[:,1]
@@ -23,8 +23,8 @@ for count, coord in enumerate(z):
         zf = np.append(zf, z[count])
 
 
-ymax = 0.2
-xmax = 0.7
+ymax = 0.05
+xmax = 0.5
 
 for count, item in enumerate(yf):
     if abs(item) < ymax:
@@ -59,11 +59,14 @@ def residual(pars, x, data):
     model = func(x, a, b, c)
     return model - data
 
-out = minimize(residual, p, args=(xdata, ydata))
+#out = minimize(residual, p, args=(xdata, ydata))
 #print(out.last_internal_values)
 
 plt.scatter(xdata, ydata)
-plt.scatter(xdata, ydata+out.residual)
+#plt.scatter(xdata, ydata+out.residual)
 plt.xlabel('Distance en x [mm]')
 plt.ylabel('Hauteur [\u03BCm]')
+plt.show()
+
+plt.scatter(x, z)
 plt.show()

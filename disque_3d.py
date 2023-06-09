@@ -5,7 +5,7 @@ import numpy as np
 from math import sin, cos, pi
 
 
-filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\extrem_true_size.mesh'
+filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\layers-0.mesh'
 
 refinement_level = 0
 filename_mesh = refine_mesh(filename_mesh, refinement_level)
@@ -40,7 +40,7 @@ variables = {
     'v' : ('test field', 'displacement', 'u'),
 }
 
-exterior_radius = 4.9
+exterior_radius = 4
 interior_radius = 0.3
 
 sceew_radius = 0.2
