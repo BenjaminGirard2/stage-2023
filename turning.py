@@ -2,14 +2,14 @@ import meshio
 import numpy as np
 import matplotlib.pyplot as plt
 
-mesh = meshio.read(r'vtk-files\centr_true_size_4.vtk')
+mesh = meshio.read(r'vtk-files\centr_true_size_4-3.vtk')
 u_field = mesh.point_data['u']
 x = mesh.points[:,0]
 y = mesh.points[:,1]
 z = mesh.points[:,2]
 
-ymax = 0.05
-h = 2.45
+ymax = 0.07
+h = 0.4
 
 
 
@@ -51,6 +51,8 @@ x_res_filtered = x_res_filtered[7:]
 plt.scatter(x_res_filtered, z_res_filtered)
 plt.show()
 
+plt.scatter(x, u_field[:,2])
+plt.show()
 
 
 

@@ -5,7 +5,7 @@ import numpy as np
 from math import sin, cos, pi
 
 
-filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\layers-0.mesh'
+filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\centr_true_size_4.mesh'
 
 refinement_level = 0
 filename_mesh = refine_mesh(filename_mesh, refinement_level)
@@ -32,7 +32,7 @@ mu = (young)/((1+poisson)*2)
 
 materials = {
     'Aluminum' : ({'D': stiffness_from_lame(3, lamb, mu)},),
-    'Load' : ({'.val' : [0.0, 0.0, 1.0]},),
+    'Load' : ({'.val' : [0.0, 0.0, 0.05]},),
 }
 
 variables = {
