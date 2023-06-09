@@ -7,7 +7,7 @@ gmsh.initialize()
 
 gmsh.model.add("try_1")
 
-m_size = 10e-02
+m_size = 20e-02
 
 mesh = gmsh.model.geo
 
@@ -36,7 +36,7 @@ mesh.extrude([(2, 2)], 0, 0, 0.31)
 mesh.synchronize()
 
 gmsh.model.mesh.generate(3)
-gmsh.write("mid_true_size.mesh")
+gmsh.write("centr_true_size.mesh")
 
 
 if '-nopopup' not in sys.argv:
