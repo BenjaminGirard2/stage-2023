@@ -84,3 +84,23 @@ solvers = {
         'eps_a'      : 1e-10,
     }),
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+for pos, coord in enumerate(z):
+    if coord > 0.3:
+        u_field = np.append(u_field, u_field_raw[pos])
+        x = np.append(x, x_raw[pos])
+        y = np.append(y, y_raw[pos])
+        z = np.append(z, z_raw[pos])
