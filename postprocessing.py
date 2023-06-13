@@ -37,8 +37,8 @@ class PostProcessing():
                 new_z = np.append(new_z, self.z_coors[pos])
 
         if len(new_uz) < 1:
-            raise ValueError(' No value selected, probaly the zmin value is \
-                             wrong ')
+            raise ValueError('No value selected, probaly the zmin value is '
+                             'wrong')
         
         self.u_field_x = new_ux
         self.u_field_y = new_uy
@@ -122,32 +122,36 @@ class PostProcessing():
         self.z_coors = new_z
 
 
-    def apply_flat_polishing(self, depth):
+    def apply_flat_polishing(self, depth, *boundary):
 
         """Apply the polishing on the surface under stress.
         The depth given is the thickness you want to remove.
-        We assume that the thickness of the plate start at z=0"""
-
+        We assume that the thickness of the plate start at z=0
+        Additionnal argument can be given to do the polishing only on a 
+        certain zone in x: first additional is the ymax and second is the
+        ymin"""
 
         thickness = max(self.z_coors)
         if depth > thickness:
-            raise ValueError('The depth is too much, the thickness of the \
-                             plate is the following:(%g)' % thickness)
+            raise ValueError('The depth is too much, the thickness of the '
+                             'plate is the following:(%g)' % thickness)
         
         zmax = max(self.u_field_z) + max(self.z_coors)
         height_max = zmax - depth
 
         new_x = new_y = new_z = new_ux = new_uy = new_uz = np.empty(0)
 
-        for pos, uz in enumerate(self.u_field_z):
-            z_displaced = self.z_coors[pos]+uz
+        if not boundary:
+            for pos, uz in enumerate(self.u_field_z):
+                z_displaced = self.z_coors[pos]+uz
 
-            if z_displaced > height_max:
-                height_cutted = z_displaced-height_max
-                new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
+                if z_displaced > height_max:
+                    
+                    height_cutted = z_displaced-height_max
+                    new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
 
-            else:
-                new_z = np.append(new_z, self.z_coors[pos])
+                else:
+                    new_z = np.append(new_z, self.z_coors[pos])
 
                 new_ux = np.append(new_ux, self.u_field_x[pos])
                 new_uy = np.append(new_uy, self.u_field_y[pos])
@@ -155,9 +159,100 @@ class PostProcessing():
 
                 new_x = np.append(new_x, self.x_coors[pos])
                 new_y = np.append(new_y, self.y_coors[pos])
+        else:
+            xmax = boundary[0]
+            xmin = boundary[1]
+            for pos, uz in enumerate(self.u_field_z):
+                z_displaced = self.z_coors[pos]+uz
+
+                if (z_displaced > height_max) and (self.x_coors[pos] > xmin) \
+                and (self.x_coors[pos] < xmax):
+                    
+                    height_cutted = z_displaced-height_max
+                    new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
+
+                else:
+                    new_z = np.append(new_z, self.z_coors[pos])
+
+                new_ux = np.append(new_ux, self.u_field_x[pos])
+                new_uy = np.append(new_uy, self.u_field_y[pos])
+                new_uz = np.append(new_uz, self.u_field_z[pos])
+
+                new_x = np.append(new_x, self.x_coors[pos])
+                new_y = np.append(new_y, self.y_coors[pos])
+
+
         
         if len(new_z) < 1:
-            raise ValueError(' No value selected during the flatening')
+            raise ValueError('No value selected during the flatening')
+
+        self.u_field_x = new_ux
+        self.u_field_y = new_uy
+        self.u_field_z = new_uz
+
+        self.x_coors = new_x
+        self.y_coors = new_y
+        self.z_coors = new_z
+
+
+    def apply_circular_symetric_polishing(self, function, *boundary):
+        """Apply the polishing but with any function. The function must take a
+        value in x and y and return a value of z.
+        
+        The function must have the following format:
+
+        def func(x, y):
+            z = x**2 +y**2 + 0.3
+            return z
+            """
+        
+        new_x = new_y = new_z = new_ux = new_uy = new_uz = np.empty(0)
+
+        if not boundary:
+            for pos, uz in enumerate(self.u_field_z):
+                z_displaced = self.z_coors[pos]+uz
+                value_of_fct = function(self.x_coors[pos], self.y_coors[pos])
+                
+                if z_displaced > value_of_fct:
+                    height_cutted = z_displaced-value_of_fct
+                    new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
+
+                else:
+                    new_z = np.append(new_z, self.z_coors[pos])
+
+                new_ux = np.append(new_ux, self.u_field_x[pos])
+                new_uy = np.append(new_uy, self.u_field_y[pos])
+                new_uz = np.append(new_uz, self.u_field_z[pos])
+
+                new_x = np.append(new_x, self.x_coors[pos])
+                new_y = np.append(new_y, self.y_coors[pos])
+
+        else:
+            xmax = boundary[0]
+            xmin = boundary[1]
+
+            for pos, uz in enumerate(self.u_field_z):
+                z_displaced = self.z_coors[pos]+uz
+                value_of_fct = function(self.x_coors[pos], self.y_coors[pos])
+
+                if (z_displaced > value_of_fct) and (self.x_coors[pos] > xmin) \
+                and (self.x_coors[pos] < xmax):
+                    
+                    height_cutted = z_displaced-value_of_fct
+                    new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
+
+                else:
+                    new_z = np.append(new_z, self.z_coors[pos])
+
+                new_ux = np.append(new_ux, self.u_field_x[pos])
+                new_uy = np.append(new_uy, self.u_field_y[pos])
+                new_uz = np.append(new_uz, self.u_field_z[pos])
+
+                new_x = np.append(new_x, self.x_coors[pos])
+                new_y = np.append(new_y, self.y_coors[pos])
+
+        if len(new_z) < 1:
+            raise ValueError('No value selected during the flatening')
 
         self.u_field_x = new_ux
         self.u_field_y = new_uy
@@ -172,7 +267,9 @@ class PostProcessing():
         """Plot the values of the x coordinates with their coresponding z 
         coordinates"""
 
-        plt.scatter(self.x_coors, self.z_coors)
+        scissors = 1
+
+        plt.scatter(self.x_coors[scissors:], self.z_coors[scissors:])
         plt.show()
 
 
