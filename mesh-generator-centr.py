@@ -7,7 +7,7 @@ gmsh.initialize()
 
 gmsh.model.add("try_1")
 
-m_size = 17.5e-02
+m_size = 12e-02
 m_size2 = 4e-02
 
 mesh = gmsh.model.geo
@@ -46,7 +46,7 @@ mesh.synchronize()
 
 
 mesh.extrude([(2, 2)], 0, 0, 0.31)
-mesh.extrude([(2, 4)], 0, 0, 0.31, [10], recombine=True)
+mesh.extrude([(2, 4)], 0, 0, 0.31, recombine=True)
 
 
 mesh.synchronize()

@@ -5,7 +5,7 @@ import numpy as np
 from math import sin, cos, pi
 
 
-filename_mesh = r'C:\Users\Benjamin/Desktop/stage 2023/mesh\centr_true_size_4.mesh'
+filename_mesh = r'C:\Users\Benjamin\Desktop\stage 2023\mesh\centr_true_size_5.mesh'
 
 refinement_level = 0
 filename_mesh = refine_mesh(filename_mesh, refinement_level)
@@ -32,7 +32,7 @@ mu = (young)/((1+poisson)*2)
 
 materials = {
     'Aluminum' : ({'D': stiffness_from_lame(3, lamb, mu)},),
-    'Load' : ({'.val' : [0.0, 0.0, 0.05]},),
+    'Load' : ({'.val' : [0.0, 0.0, 0.075]},),
 }
 
 variables = {
@@ -41,17 +41,20 @@ variables = {
 }
 
 exterior_radius = 4
-interior_radius = 0.3
+interior_radius = 0.25
 
 sceew_radius = 0.2
 distance_from_center = 4.2
 number_of_supports= 6
 
+radius_off_center = 0.2
+radius_off_center_distance = 3
+
 
 regions = {
     'Omega' : 'all',
-    'circonference': 'vertices by select_circ_out',
     'center_0' : ('vertices by select_circ_in'),
+    'center_offset' : ('vertices by select_circ_off_center'),
     'supported' : 'vertices by select_supports',
 }
 
@@ -62,7 +65,7 @@ ebcs = {
 equations = {
    'balance_of_forces' :
    """dw_lin_elastic.3.Omega(Aluminum.D, v, u)
-      = dw_point_load.0.center_0(Load.val, v)""",
+      = dw_point_load.0.center_offset(Load.val, v)""",
 }
 
 solvers = {
@@ -82,7 +85,21 @@ functions = {
                     select_circ_in(coors[:,0], coors[:,1], 0, interior_radius),),
     'select_supports': (lambda coors, domain=None:
                     select_supports(coors[:,0], coors[:,1], 0, [sceew_radius, distance_from_center, number_of_supports]),),
+    'select_circ_off_center': (lambda coors, domain=None:
+                    select_circ_off_center(coors[:,0], coors[:,1], 0, [radius_off_center, radius_off_center_distance]),),
 }
+
+def select_circ_off_center( x, y, z, params ):
+    """Select disk subdomain of a given radius offcentered."""
+    r = np.sqrt( np.square(x-params[1]), np.square(y) )
+
+    out = np.where(r < params[0])[0]
+
+    n = out.shape[0]
+    if n <= 3:
+        raise ValueError( 'too few vertices selected! (%d)' % n )
+
+    return out
 
 
 def select_circ_out( x, y, z, radius ):
