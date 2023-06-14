@@ -1,6 +1,7 @@
 import meshio
 import numpy as np
 import matplotlib.pyplot as plt
+from lmfit import Parameters, minimize
 
 
 class PostProcessing():
@@ -19,6 +20,8 @@ class PostProcessing():
         self.x_coors = self.mesh.points[:,0]
         self.y_coors = self.mesh.points[:,1]
         self.z_coors = self.mesh.points[:,2]
+
+        self.is_polished = False
 
 
     def filter_coords_in_z(self, zmin=0.3):
@@ -131,6 +134,10 @@ class PostProcessing():
         certain zone in x: first additional is the ymax and second is the
         ymin"""
 
+        if self.is_polished:
+            raise InterruptedError('Its already polished! What are you trying'
+                                   'to do?')
+
         thickness = max(self.z_coors)
         if depth > thickness:
             raise ValueError('The depth is too much, the thickness of the '
@@ -145,7 +152,7 @@ class PostProcessing():
             for pos, uz in enumerate(self.u_field_z):
                 z_displaced = self.z_coors[pos]+uz
 
-                if z_displaced > height_max:
+                if z_displaced >= height_max:
                     
                     height_cutted = z_displaced-height_max
                     new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
@@ -165,7 +172,7 @@ class PostProcessing():
             for pos, uz in enumerate(self.u_field_z):
                 z_displaced = self.z_coors[pos]+uz
 
-                if (z_displaced > height_max) and (self.x_coors[pos] > xmin) \
+                if (z_displaced >= height_max) and (self.x_coors[pos] > xmin)\
                 and (self.x_coors[pos] < xmax):
                     
                     height_cutted = z_displaced-height_max
@@ -194,26 +201,35 @@ class PostProcessing():
         self.y_coors = new_y
         self.z_coors = new_z
 
+        self.is_polished = True
+
 
     def apply_circular_symetric_polishing(self, function, *boundary):
         """Apply the polishing but with any function. The function must take a
-        value in x and y and return a value of z.
+        value in x and y and return a value of z. This will remove all values 
+        that are greater than the curve given
         
         The function must have the following format:
 
         def func(x, y):
+        
             z = x**2 +y**2 + 0.3
+
             return z
             """
         
+        if self.is_polished:
+            raise InterruptedError('Its already polished! What are you trying'
+                                   'to do?')
+
         new_x = new_y = new_z = new_ux = new_uy = new_uz = np.empty(0)
 
         if not boundary:
             for pos, uz in enumerate(self.u_field_z):
                 z_displaced = self.z_coors[pos]+uz
                 value_of_fct = function(self.x_coors[pos], self.y_coors[pos])
-                
-                if z_displaced > value_of_fct:
+
+                if z_displaced >= value_of_fct:
                     height_cutted = z_displaced-value_of_fct
                     new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
 
@@ -235,7 +251,7 @@ class PostProcessing():
                 z_displaced = self.z_coors[pos]+uz
                 value_of_fct = function(self.x_coors[pos], self.y_coors[pos])
 
-                if (z_displaced > value_of_fct) and (self.x_coors[pos] > xmin) \
+                if (z_displaced >= value_of_fct) and (self.x_coors[pos] > xmin) \
                 and (self.x_coors[pos] < xmax):
                     
                     height_cutted = z_displaced-value_of_fct
@@ -262,25 +278,102 @@ class PostProcessing():
         self.y_coors = new_y
         self.z_coors = new_z
 
+        self.is_polished = True
 
-    def plot_xz(self):
+
+    def plot_xz(self, scissors=1):
         """Plot the values of the x coordinates with their coresponding z 
         coordinates"""
 
-        scissors = 1
-
+#TODO: add graph title, axis and fancy it
         plt.scatter(self.x_coors[scissors:], self.z_coors[scissors:])
         plt.show()
 
 
-    def plot_displacement(self):
+    def plot_displacement(self, scissors=1):
         """Plot the values of the x coordinates with their coresponding z 
         coordinates but with the displacement added. One more argument can
         be given to cut the values because sometime there is a wrong value at
         the start."""
         
-        scissors = 1
-
+#TODO: add graph title, axis and fancy it
         plt.scatter(self.x_coors[scissors:] + self.u_field_x[scissors:], 
                     self.z_coors[scissors:] + self.u_field_z[scissors:])
+        plt.show()
+
+
+    def curve_fit_parapola(self, use_displacement=False, scissors=1):
+
+        """Apply a parabolic curve fit the the values on the x axis and show 
+        it. The values must a short variation in the y direction or else 
+        there's going to be a lot of noice."""
+
+        xdata = self.x_coors[scissors:]
+        zdata = self.z_coors[scissors:]
+
+        if use_displacement:
+            xdata = xdata + self.u_field_x[scissors:]
+            zdata = zdata + self.u_field_z[scissors:]
+
+        def parapola(x, a, b, c):
+            return a*x**2 + b*x + c
+
+        p = Parameters()
+        p.add('a', value=0.2)
+        p.add('b', value=0)
+        p.add('c', value=0.25)
+
+        def residual(pars, x, data):
+            a = pars['a']
+            b = pars['b']
+            c = pars['c']
+            model = parapola(x, a, b, c)
+            return model - data
+
+        out = minimize(residual, p, args=(xdata, zdata))
+
+        self.results = out
+#TODO: add graph title, axis and fancy it
+        plt.scatter(xdata, zdata)
+        plt.scatter(xdata, zdata + out.residual)
+        plt.xlabel('Distance en x [mm]')
+        plt.ylabel('Hauteur [\u03BCm]')
+        plt.show()
+
+
+    def curve_fit_circular(self, use_displacement=False, scissors=1):
+
+        """Apply a shepric curve fit the the values on the x axis and show 
+        it. The values must a short variation in the y direction or else 
+        there's going to be a lot of noice."""
+
+        xdata = self.x_coors[scissors:]
+        zdata = self.z_coors[scissors:]
+
+        if use_displacement:
+            xdata = xdata + self.u_field_x[scissors:]
+            zdata = zdata + self.u_field_z[scissors:]
+
+        def circle(x, a, b, c):
+            return -np.sqrt(a-(x-b)**2) + c
+
+        p = Parameters()
+        p.add('a', value=30000)
+        p.add('b', value=0)
+        p.add('c', value=0.3)
+
+        def residual(pars, x, data):
+            a = pars['a']
+            b = pars['b']
+            c = pars['c']
+            model = circle(x, a, b, c)
+            return model - data
+
+        out = minimize(residual, p, args=(xdata, zdata))
+        
+#TODO: add graph title, axis and fancy it
+        plt.scatter(xdata, zdata)
+        plt.scatter(xdata, zdata + out.residual)
+        plt.xlabel('Distance en x [mm]')
+        plt.ylabel('Hauteur [\u03BCm]')
         plt.show()
