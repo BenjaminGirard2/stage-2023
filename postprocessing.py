@@ -302,7 +302,7 @@ class PostProcessing():
         plt.show()
 
 
-    def curve_fit_parapola(self, use_displacement=False, scissors=1):
+    def curve_fit_parapola(self, show_residual=False, use_displacement=False, scissors=1):
 
         """Apply a parabolic curve fit the the values on the x axis and show 
         it. The values must a short variation in the y direction or else 
@@ -340,10 +340,96 @@ class PostProcessing():
         plt.ylabel('Hauteur [\u03BCm]')
         plt.show()
 
+        if show_residual:
+            plt.scatter(xdata,out.residual)
+            plt.show()
+
+
+    def find_polishing_parameters_parabola(self, order, apply_it=False, scissors=1,
+                                          verbose=True):
+        """This function find the best curve than fit the values. Use 
+        polynomial curve fitting"""
+
+        xdata = self.x_coors[scissors:]
+        zdata = self.z_coors[scissors:]
+
+        if order > 25:
+            raise ValueError('Cant have a grater value than for now.')
+
+        def parapola(x, a, b, c):
+            return a*x**2 + b*x + c
+
+        parabola_parameters = Parameters()
+        parabola_parameters.add('a', value=0.2)
+        parabola_parameters.add('b', value=0)
+        parabola_parameters.add('c', value=0.25)
+
+        def residual_from_parabola(pars, x, data):
+            a = pars['a']
+            b = pars['b']
+            c = pars['c']
+            model = parapola(x, a, b, c)
+            return model - data
+
+        parabola_out = minimize(residual_from_parabola, parabola_parameters, 
+                                args=(xdata, zdata))
+
+        def polynomial_func(*args):
+            
+            x = args[0]
+            result = 0
+
+            for pos, value in enumerate(args[1:][0]):
+                result += value*x**pos
+            return result
+
+        p2 = Parameters()
+        for i in range(order+1):
+            p2.add(chr(97+i), value=0.01)
+
+        def residual2(pars, x, data):
+            params_list = []
+            for i in range(order+1):
+                params_list.append(pars[chr(97+i)])
+
+            model = polynomial_func(x, params_list)
+            return model - data
+                
+        out2 = minimize(residual2, p2, args=(xdata, parabola_out.residual))
+
+        self.last_inter_values = out2.last_internal_values
+   
+        if apply_it:
+            self.apply_polishing(verbose=True)
+
+
+
+        if verbose:
+            print(out2.last_internal_values)
+
+            plt.scatter(xdata, parabola_out.residual + out2.residual)
+            plt.scatter(xdata, parabola_out.residual)
+            plt.show() 
+
+
+
+    def apply_polishing(self, verbose=True):
+
+        if 'self.last_inter_values' not in locals():
+            raise AttributeError('You have to find the parameters first using'
+                                 ' the find_polishing_parameters_parabola'
+                                 'function.')
+        
+        
+
+
+
 
     def curve_fit_circular(self, use_displacement=False, scissors=1):
-
-        """Apply a shepric curve fit the the values on the x axis and show 
+    
+        """BROKEN
+        
+        Apply a shepric curve fit the the values on the x axis and show 
         it. The values must a short variation in the y direction or else 
         there's going to be a lot of noice."""
 
@@ -377,3 +463,4 @@ class PostProcessing():
         plt.xlabel('Distance en x [mm]')
         plt.ylabel('Hauteur [\u03BCm]')
         plt.show()
+
