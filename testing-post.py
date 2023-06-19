@@ -22,13 +22,15 @@ def circular(x,y):
 
 
 post.filter_coords_in_z()
-post.filter_coords_in_y(0.1)
+post.filter_coords_in_y(0.2)
 post.filter_coords_in_x(3)
 post.apply_flat_polishing(0.1)
 #post.apply_circular_symetric_polishing(parabola)
 
-post.plot_displacement()
-post.plot_xz()
+#post.plot_displacement()
+post.curve_fit_parapola()
 
-post.apply_polishing()
-post.find_polishing_parameters_parabola(10)
+post.find_polishing_parameters_parabola(14)
+
+post.apply_corrected_polishing()
+post.curve_fit_parapola()
