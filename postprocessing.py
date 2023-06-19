@@ -7,6 +7,7 @@ from lmfit import Parameters, minimize
 class PostProcessing():
     """Take a .vtk file and process it to take the values."""
 
+
     def __init__(self, file_name):
         """Create the class instance with the file name.
         Must be string and be a .vtk file"""
@@ -22,6 +23,7 @@ class PostProcessing():
         self.z_coors = self.mesh.points[:,2]
 
         self.is_polished = False
+        self.residual = None
 
 
     def filter_coords_in_z(self, zmin=0.3):
@@ -134,6 +136,14 @@ class PostProcessing():
         certain zone in x: first additional is the ymax and second is the
         ymin"""
 
+        self.u_field_x_copy = self.u_field_x
+        self.u_field_y_copy = self.u_field_y
+        self.u_field_z_copy = self.u_field_z
+
+        self.x_coors_copy = self.x_coors
+        self.y_coors_copy = self.y_coors
+        self.z_coors_copy = self.z_coors
+
         if self.is_polished:
             raise InterruptedError('Its already polished! What are you trying'
                                    'to do?')
@@ -188,8 +198,6 @@ class PostProcessing():
                 new_x = np.append(new_x, self.x_coors[pos])
                 new_y = np.append(new_y, self.y_coors[pos])
 
-
-        
         if len(new_z) < 1:
             raise ValueError('No value selected during the flatening')
 
@@ -202,6 +210,8 @@ class PostProcessing():
         self.z_coors = new_z
 
         self.is_polished = True
+        self.depth = depth
+        self.polishing_type = ['flat']
 
 
     def apply_circular_symetric_polishing(self, function, *boundary):
@@ -279,13 +289,14 @@ class PostProcessing():
         self.z_coors = new_z
 
         self.is_polished = True
+        self.polishing_type = ['custom', function]
 
 
     def plot_xz(self, scissors=1):
         """Plot the values of the x coordinates with their coresponding z 
         coordinates"""
 
-#TODO: add graph title, axis and fancy it
+        #TODO: add graph title, axis and fancy it
         plt.scatter(self.x_coors[scissors:], self.z_coors[scissors:])
         plt.show()
 
@@ -296,7 +307,7 @@ class PostProcessing():
         be given to cut the values because sometime there is a wrong value at
         the start."""
         
-#TODO: add graph title, axis and fancy it
+        #TODO: add graph title, axis and fancy it
         plt.scatter(self.x_coors[scissors:] + self.u_field_x[scissors:], 
                     self.z_coors[scissors:] + self.u_field_z[scissors:])
         plt.show()
@@ -333,7 +344,7 @@ class PostProcessing():
         out = minimize(residual, p, args=(xdata, zdata))
 
         self.results = out
-#TODO: add graph title, axis and fancy it
+        #TODO: add graph title, axis and fancy it
         plt.scatter(xdata, zdata)
         plt.scatter(xdata, zdata + out.residual)
         plt.xlabel('Distance en x [mm]')
@@ -345,10 +356,15 @@ class PostProcessing():
             plt.show()
 
 
-    def find_polishing_parameters_parabola(self, order, apply_it=False, scissors=1,
-                                          verbose=True):
-        """This function find the best curve than fit the values. Use 
-        polynomial curve fitting"""
+    def find_polishing_parameters_parabola(self, order, apply_it=False,
+                                          plot=True, verbose=True, 
+                                          scissors=1):
+        
+        """This function calculate the correction needed to obtain a perfect
+          parabolic curve. It first does a curve fit of the curve of the hole
+          with a parabola. Then, do a curve fit of the difference the hole has
+          with the parabola. Use polynomial function. The order given is the
+          order used in the second curve fit"""
 
         xdata = self.x_coors[scissors:]
         zdata = self.z_coors[scissors:]
@@ -371,7 +387,7 @@ class PostProcessing():
             model = parapola(x, a, b, c)
             return model - data
 
-        parabola_out = minimize(residual_from_parabola, parabola_parameters, 
+        parabola_out = minimize(residual_from_parabola, parabola_parameters,
                                 args=(xdata, zdata))
 
         def polynomial_func(*args):
@@ -397,30 +413,81 @@ class PostProcessing():
                 
         out2 = minimize(residual2, p2, args=(xdata, parabola_out.residual))
 
-        self.last_inter_values = out2.last_internal_values
-   
-        if apply_it:
-            self.apply_polishing(verbose=True)
-
-
-
-        if verbose:
-            print(out2.last_internal_values)
-
+        self.residual = parabola_out.residual+out2.residual
+        
+        if plot:
             plt.scatter(xdata, parabola_out.residual + out2.residual)
             plt.scatter(xdata, parabola_out.residual)
             plt.show() 
 
+        if verbose:
+            for i, j in enumerate(out2.last_internal_values):
+                print(chr(97+i), ' =', j)
+                
+            print('\nChi-squarre =', out2.chisqr,'\nReduced chi-squarre =',
+                  out2.redchi,'\nAkaike information criterion =', out2.aic,
+                  '\nBayesian information criterion', out2.bic)
+
+        if apply_it:
+            self.apply_corrected_polishing()
 
 
-    def apply_polishing(self, verbose=True):
+    def apply_corrected_polishing(self, verbose=True):
 
-        if 'self.last_inter_values' not in locals():
+        if self.residual is None:
             raise AttributeError('You have to find the parameters first using'
-                                 ' the find_polishing_parameters_parabola'
-                                 'function.')
+                                 ' the find_polishing_parameters_parabola.')
         
-        
+        self.u_field_x = self.u_field_x_copy[1:]
+        self.u_field_y = self.u_field_y_copy[1:]
+        self.u_field_z = self.u_field_z_copy[1:]
+
+        self.x_coors = self.x_coors_copy[1:]
+        self.y_coors = self.y_coors_copy[1:]
+        self.z_coors = self.z_coors_copy[1:]
+
+        zmax = max(self.u_field_z) + max(self.z_coors)
+        height_max = zmax - self.depth
+
+        new_x = new_y = new_z = new_ux = new_uy = new_uz = np.empty(0)
+
+
+        for pos, uz in enumerate(self.u_field_z):
+            z_displaced = self.z_coors[pos]+uz
+            if z_displaced >= height_max + self.residual[pos]:
+                    
+                height_cutted = z_displaced-height_max-self.residual[pos]
+                new_z = np.append(new_z, self.z_coors[pos]-height_cutted)
+
+            else:
+                new_z = np.append(new_z, self.z_coors[pos])
+
+            new_ux = np.append(new_ux, self.u_field_x[pos])
+            new_uy = np.append(new_uy, self.u_field_y[pos])
+            new_uz = np.append(new_uz, self.u_field_z[pos])
+
+            new_x = np.append(new_x, self.x_coors[pos])
+            new_y = np.append(new_y, self.y_coors[pos])
+
+        self.u_field_x = new_ux
+        self.u_field_y = new_uy
+        self.u_field_z = new_uz
+
+        self.x_coors = new_x
+        self.y_coors = new_y
+        self.z_coors = new_z
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -457,7 +524,7 @@ class PostProcessing():
 
         out = minimize(residual, p, args=(xdata, zdata))
         
-#TODO: add graph title, axis and fancy it
+        #TODO: add graph title, axis and fancy it
         plt.scatter(xdata, zdata)
         plt.scatter(xdata, zdata + out.residual)
         plt.xlabel('Distance en x [mm]')
