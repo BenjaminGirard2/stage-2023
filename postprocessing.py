@@ -396,7 +396,7 @@ class PostProcessing():
             result = 0
 
             for pos, value in enumerate(args[1:][0]):
-                result += value*x**pos
+                result += value*x**(2*pos)
             return result
 
         p2 = Parameters()
@@ -412,7 +412,7 @@ class PostProcessing():
             return model - data
                 
         out2 = minimize(residual2, p2, args=(xdata, parabola_out.residual))
-
+        self.test=out2
         self.residual = parabola_out.residual+out2.residual
         
         if plot:
