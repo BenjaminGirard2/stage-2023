@@ -451,7 +451,6 @@ class PostProcessing():
 
         new_x = new_y = new_z = new_ux = new_uy = new_uz = np.empty(0)
 
-
         for pos, uz in enumerate(self.u_field_z):
             z_displaced = self.z_coors[pos]+uz
             if z_displaced >= height_max + self.residual[pos]:

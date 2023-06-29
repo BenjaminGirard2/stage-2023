@@ -1,35 +1,51 @@
-import numpy
-from vtk import vtkStructuredPointsReader
-from vtkmodules.util import numpy_support as VN
+import gmsh
+import sys
 
 
 
-reader = vtkStructuredPointsReader()
-reader.SetFileName(filename)
-reader.ReadAllVectorsOn()
-reader.ReadAllScalarsOn()
-reader.Update()
+gmsh.initialize()
 
-data = reader.GetOutput()
+gmsh.model.add("try_1")
 
-dim = data.GetDimensions()
-vec = list(dim)
-vec = [i-1 for i in dim]
-vec.append(3)
+c = 20
+nb_segment = 20
+m_size = c/nb_segment
 
-u = VN.vtk_to_numpy(data.GetCellData().GetArray('velocity'))
-b = VN.vtk_to_numpy(data.GetCellData().GetArray('cell_centered_B'))
 
-u = u.reshape(vec,order='F')
-b = b.reshape(vec,order='F')
+mesh = gmsh.model.geo
 
-x = zeros(data.GetNumberOfPoints())
-y = zeros(data.GetNumberOfPoints())
-z = zeros(data.GetNumberOfPoints())
 
-for i in range(data.GetNumberOfPoints()):
-        x[i],y[i],z[i] = data.GetPoint(i)
+mesh.addPoint(10, 10, 0, m_size, 2) 
+mesh.addPoint(10, -10, 0, m_size, 3) 
+mesh.addPoint(-10, -10, 0, m_size, 4) 
+mesh.addPoint(-10, 10, 0, m_size, 5)
 
-x = x.reshape(dim,order='F')
-y = y.reshape(dim,order='F')
-z = z.reshape(dim,order='F')
+mesh.addLine(2, 3, 1)
+mesh.addLine(3, 4, 2)
+mesh.addLine(4, 5, 3)
+mesh.addLine(5, 2, 4)
+
+mesh.addCurveLoop([1,2,3,4], 1)
+
+mesh.addPlaneSurface([1], 2)
+
+
+mesh.synchronize()
+
+
+
+mesh.extrude([(2, 2)], 0, 0, 0.5, recombine=True)
+
+gmsh.option.setNumber("Mesh.Algorithm", 8)
+#gmsh.option.setNumber("Mesh.RecombineAll", 1)
+
+mesh.synchronize()
+
+gmsh.model.mesh.generate(3)
+gmsh.write("carre.mesh")
+
+
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
+gmsh.finalize()

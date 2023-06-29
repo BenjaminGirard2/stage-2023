@@ -5,7 +5,7 @@ import numpy as np
 from math import sin, cos, pi
 
 
-filename_mesh = r'C:\Users\Benjamin\Desktop\stage 2023\mesh\centr_true_size_5.mesh'
+filename_mesh = r'C:\Users\Benjamin\Desktop\stage 2023\mesh\centr_true_size_4.mesh'
 
 refinement_level = 0
 filename_mesh = refine_mesh(filename_mesh, refinement_level)
@@ -45,9 +45,9 @@ interior_radius = 0.25
 
 sceew_radius = 0.2
 distance_from_center = 4.2
-number_of_supports= 6
+number_of_supports= 2
 
-radius_off_center = 0.2
+radius_off_center = 0.3
 radius_off_center_distance = 3
 
 
@@ -65,7 +65,7 @@ ebcs = {
 equations = {
    'balance_of_forces' :
    """dw_lin_elastic.3.Omega(Aluminum.D, v, u)
-      = dw_point_load.0.center_offset(Load.val, v)""",
+      = dw_point_load.0.center_0(Load.val, v)""",
 }
 
 solvers = {
