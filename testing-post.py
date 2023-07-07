@@ -1,7 +1,7 @@
 from postprocessing import PostProcessing
 from numpy import sqrt
 
-filename = r'C:\Users\Benjamin\Desktop\stage 2023\vtk-files\centr_true_size_4-3.vtk'
+filename = r'C:\Users\Benjamin\Desktop\stage 2023\circular_mince.vtk'
 post = PostProcessing(filename)
 
 
@@ -21,17 +21,12 @@ def circular(x,y):
     return z
 
 
-post.filter_coords_in_z()
-post.filter_coords_in_y(0.1)
-post.plot_displacement()
-post.filter_coords_in_x(3)
-post.apply_flat_polishing(0.1)
+post.filter_coords_in_z(0.2)
+post.filter_coords_in_y(0.4)
+post.curve_fit_parapola(use_displacement=True, scissors=2)
+post.curve_fit_circular()
+
 #post.apply_circular_symetric_polishing(parabola)
 
-post.plot_displacement()
-post.curve_fit_parapola()
 
-post.find_polishing_parameters_parabola(16)
-
-post.apply_corrected_polishing()
-post.curve_fit_parapola()
+#post.curve_fit_parapola()
