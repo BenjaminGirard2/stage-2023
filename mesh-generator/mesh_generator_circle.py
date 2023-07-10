@@ -9,7 +9,7 @@ gmsh.model.add("try_1")
 
 r = 5
 m_size = 0.25
-number_points = 20
+number_points = 6
 
 spacing_angle = (2*pi) / number_points
 
@@ -55,7 +55,7 @@ mesh.extrude([(2, 2)], 0, 0, 0.25)
 mesh.synchronize()
 
 gmsh.model.mesh.generate(3)
-#gmsh.write("circular_mince.mesh")
+gmsh.write("circular_6pt.mesh")
 
 
 if '-nopopup' not in sys.argv:
