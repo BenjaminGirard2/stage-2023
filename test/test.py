@@ -26,7 +26,7 @@ ebcs_ = {
 
 ebcs = {}
 d = 0.1
-nb_pts = 20
+nb_pts = 6
 spacing_angle = (2*pi) / nb_pts
 theta = 0
 for i in range(nb_pts):
