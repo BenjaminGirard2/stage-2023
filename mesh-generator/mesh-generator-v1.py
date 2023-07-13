@@ -44,6 +44,7 @@ mesh.addPlaneSurface([3], 4)
 
 mesh.synchronize()
 
+x = 28
 
 mesh.extrude([(2, 2)], 0, 0, 0.31)
 mesh.extrude([(2, 4)], 0, 0, 0.31)
