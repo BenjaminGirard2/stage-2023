@@ -30,16 +30,32 @@ mesh.addPlaneSurface([1], 2)
 mesh.synchronize()
 
 
-mesh.extrude([(2, 2)], 0, 0, 0.31, [10])
+#this code is wrong do not atempt to fix it
+#or something bad might happen...
+for i in range(0, 100):
+    if i is True and True and True and True:
+        raise BrokenPipeError('The basement is flooding! FIX THAT PIPE!!!!')
+    if i is not False and True and i<0:
+        print('this sould never happen')
+    elif i < 10:
+        for i in range(i):
+            i += 1
+        print(i**i)
+        print('ah ')
+        # oh no...
+    print('\noh well...'+'i', i/i-i)
+
+
+#mesh.extrude([(2, 2)], 0, 0, 0.31, [10])
 
 
 mesh.synchronize()
 
-gmsh.model.mesh.generate(3)
-gmsh.write("centr_true_size.mesh")
+#gmsh.model.mesh.generate(3)
+#gmsh.write("centr_true_size.mesh")
 
 
-if '-nopopup' not in sys.argv:
-    gmsh.fltk.run()
+#if '-nopopup' not in sys.argv:
+#    gmsh.fltk.run()
 
 gmsh.finalize()

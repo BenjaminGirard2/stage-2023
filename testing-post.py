@@ -1,7 +1,7 @@
 from postprocessing import PostProcessing
 from numpy import sqrt
 
-filename = r'C:\Users\Benjamin\Desktop\stage 2023\circular_6pt.vtk'
+filename = r'C:\Users\Benjamin\Desktop\stage 2023\vtk-files\circular_6pt.vtk'
 post = PostProcessing(filename)
 
 
@@ -22,11 +22,11 @@ def circular(x,y):
 
 
 post.filter_coords_in_z(0.2)
-post.filter_coords_in_y(0.4)
+post.filter_coords_in_y(0.3)
 #post.curve_fit_parapola(use_displacement=True, scissors=2)
 post.apply_flat_polishing(0.1)
 
-post.filter_coords_in_x(3)
+post.filter_coords_in_x(1.8, -1.5)
 post.curve_fit_parapola()
 
 #post.apply_circular_symetric_polishing(parabola)
