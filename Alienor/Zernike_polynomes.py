@@ -4,11 +4,17 @@ from math import factorial
 
 
 def Zernike_function(n, m):
+    print("n =", n, '\t', "m =", m)
+
+    if abs(m) > n:
+        raise ValueError
+
 
     x, y = symbols('x y')
     Z = symbols('Z')
     Z = 0
-   
+    
+    
 
     M = int( (n - abs(m) )/2)
     
@@ -23,6 +29,12 @@ def Zernike_function(n, m):
     else:
         q = (abs(m) - 1)/2
     q = int(q)
+
+    #overrite:   ---------------------------------------------------------
+    #M = 0
+    #p = 0
+    #q = 1
+    #overrite:   ---------------------------------------------------------
 
     print('M =', M)
     print('p =', p)
@@ -39,14 +51,12 @@ def Zernike_function(n, m):
 
                 xi = int( n - 2*(i+j+k) - p )
                 eta = int( 2*(i + k) + p )
-                print('xi',xi)
-                print('eta',eta, '\n')
+                print('xi', xi)
+                print('eta', eta, '\n')
 
                 if abs(m) < (2*i+p):
                     A = 0
-                    print(abs(m), 2*i+p)
                 else:
-                    #A = int(factorial(2*i + p) / factorial(2*i + p - abs(m)))
                     A = int( factorial(abs(m)) / (factorial(2*i+p) * factorial(abs(m) - 2*i - p)) )
                 print('A', A)
 
@@ -67,18 +77,4 @@ def Zernike_function(n, m):
     print('Z =', Z, '\n')
 
 
-Zernike_function(3, -3)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Zernike_function(2, 2)
