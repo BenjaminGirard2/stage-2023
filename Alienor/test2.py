@@ -1,16 +1,26 @@
 import numpy as np
-from sympy import symbols
+from sympy import symbols, Function, lambdify
 
 
 
 x = symbols('x')
 y = symbols('y')
-y = 0
 
-for i in range(10):
-    if i%2 == 0:
+h = symbols('h')
 
-        print(i, 'paire')
-    else:
-        print(i, 'impaire')
+
+Z = 2*x**2+y
+
+test = np.linspace(-10,10,100)
+t2 = 2*np.ones(100)
+
+
+Zuk = lambdify(x, Z)
+Zuk = Zuk(test)
+
+Tuk = lambdify(y, Zuk)
+
+print(Tuk.subs(y, 2))
+
+
 
