@@ -6,30 +6,38 @@ from lmfit import Parameters, minimize
 from sympy import symbols
 from math import factorial
 
-
+import time
+t0 = time.time()
 
 with open(r'Alienor\FreeformAnalysis.txt') as file:
     data = np.loadtxt(file, delimiter='\t')
     file.close()
 
 
-bond = 20
+bond = 1
+longueur = 632
 
 x = data[::bond,0]
 y = data[::bond,1]
 z = data[::bond,2]
 
+x -= np.mean(x)
+y -= np.mean(y)
+
+x = x/np.max(x)
+y = y/np.max(y)
+
 xy = np.concatenate(([x], [y]), axis=0)
 
-Zernike_coef = []
+Zernike_coef = {}
 
-for nombre in range(21):
+zernike = [5]
+
+for nombre in range(36):
     nombre += 1
 
-    def func(xy, a, b, c, d):
+    def func(xy, a, h):
         x, y = xy
-        x = x - b
-        y = y - c
 
         N = 1
         n = 0
@@ -85,28 +93,26 @@ for nombre in range(21):
 
                     Z += int((-1)**(i+j)) * A * B * C * x**xi * y**eta
 
-        return a*Z - d
+        return a*Z - h
 
 
     p = Parameters()
     p.add('a', value=1)
-    p.add('b', value=1)
-    p.add('c', value=1)
-    p.add('d', value=1)
+    p.add('h', value=1)
 
     def residual(pars, xy, data):
         a = pars['a']
-        b = pars['b']
-        c = pars['c']
-        d = pars['d']
-        model = func(xy, a, b, c, d)
+        h = pars['h']
+        model = func(xy, a, h)
         return model - data
     
-    if nombre != 1:
+    try:
         z = out.residual
+    except:
+        pass
     out = minimize(residual, p, args=(xy, z))
 
-    Zernike_coef.append(out.last_internal_values[0])
+    Zernike_coef[f'{nombre}'] = out.last_internal_values[0]
 
 print(Zernike_coef)
 
@@ -114,7 +120,7 @@ fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 
 
-surf = ax.plot_trisurf(x, y, out.residual, cmap=cm.jet, linewidth=0)
+surf = ax.plot_trisurf(x[::20], y[::20], out.residual[::20], cmap=cm.jet, linewidth=0)
 fig.colorbar(surf)
 
 ax.xaxis.set_major_locator(MaxNLocator(5))
@@ -127,4 +133,13 @@ Nombre_de_polynomes_enlevés = len(Zernike_coef)
 ax.set_title(f'Nombre de polynomes enlevés: {Nombre_de_polynomes_enlevés}')
 fig.tight_layout()
 
+t1 = time.time()
+print("Temps d'exécution:", t1-t0)
+
 plt.show()
+
+#test = list(Zernike_coef.values())
+
+
+#plt.plot(test[7:])
+#plt.show()
